@@ -27,6 +27,7 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='leads_workstation')
 
 REVOKE ALL ON DATABASE leads_workstation FROM PUBLIC;
 GRANT CONNECT ON DATABASE leads_workstation TO leads_importer, leads_app, leads_readonly;
+GRANT TEMPORARY ON DATABASE leads_workstation TO leads_importer;
 
 \connect leads_workstation
 
