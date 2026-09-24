@@ -128,6 +128,57 @@ CREATE TABLE IF NOT EXISTS lead_ops.duplicate_review (
   resolved_at timestamptz
 );
 
+CREATE TABLE IF NOT EXISTS lead_ops.import_row_manifest (
+  import_batch_id uuid NOT NULL REFERENCES lead_ops.import_batches(import_batch_id) ON DELETE CASCADE,
+  source_row bigint NOT NULL CHECK (source_row > 0),
+  source_fingerprint text NOT NULL CHECK (btrim(source_fingerprint) <> ''),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (import_batch_id, source_row),
+  UNIQUE (import_batch_id, source_row, source_fingerprint)
+);
+
+CREATE INDEX IF NOT EXISTS idx_import_row_manifest_fingerprint
+  ON lead_ops.import_row_manifest(import_batch_id, source_fingerprint);
+
+CREATE TABLE IF NOT EXISTS lead_ops.promotion_candidates (
+  candidate_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  import_batch_id uuid NOT NULL,
+  source_row bigint NOT NULL CHECK (source_row > 0),
+  source_fingerprint text NOT NULL CHECK (btrim(source_fingerprint) <> ''),
+  normalized_payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending','review','approved','promoted','rejected')),
+  review_reason text,
+  promoted_lead_id uuid REFERENCES leads.leads(lead_id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  promoted_at timestamptz,
+  UNIQUE (import_batch_id, source_row, source_fingerprint),
+  CONSTRAINT promotion_candidate_manifest_fk
+    FOREIGN KEY (import_batch_id, source_row, source_fingerprint)
+    REFERENCES lead_ops.import_row_manifest(import_batch_id, source_row, source_fingerprint)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_promotion_candidates_batch_status
+  ON lead_ops.promotion_candidates(import_batch_id, status, created_at DESC);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname='promotion_candidate_manifest_fk'
+      AND conrelid='lead_ops.promotion_candidates'::regclass
+  ) THEN
+    ALTER TABLE lead_ops.promotion_candidates
+      ADD CONSTRAINT promotion_candidate_manifest_fk
+      FOREIGN KEY (import_batch_id, source_row, source_fingerprint)
+      REFERENCES lead_ops.import_row_manifest(import_batch_id, source_row, source_fingerprint)
+      ON DELETE CASCADE;
+  END IF;
+END
+$$;
+
 CREATE TABLE IF NOT EXISTS lead_ops.outbox (
   event_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type text NOT NULL,
@@ -162,6 +213,10 @@ GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA lead_audit TO leads_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA lead_audit TO leads_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA lead_ops TO leads_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA lead_ops TO leads_app;
+REVOKE INSERT, UPDATE, DELETE ON lead_ops.import_row_manifest FROM leads_app;
+GRANT SELECT ON lead_ops.import_row_manifest TO leads_app;
+GRANT USAGE ON SCHEMA lead_ops TO leads_importer;
+GRANT SELECT, INSERT ON lead_ops.import_row_manifest TO leads_importer;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA leads, lead_audit, lead_ops TO leads_readonly;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA leads, lead_audit, lead_ops TO leads_readonly;
