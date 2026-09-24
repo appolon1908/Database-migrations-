@@ -32,3 +32,4 @@ A release gate is green only when all of the following are proven on the backup 
 6. No remote PostgreSQL endpoint is contacted.
 
 This policy does not authorize real lead ingestion, production effects, or promotion of this backup node to source-of-truth.
+- Backups authenticate with the least-privilege `leads_readonly` role; dynamic `lead_import_raw` tables grant read access through `leads_importer` default privileges so raw recovery data is included without granting raw access to `leads_app`.

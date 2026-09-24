@@ -5,8 +5,8 @@ umask 077
 : "${LEADS_DB_HOST:?LEADS_DB_HOST is required}"
 : "${LEADS_DB_PORT:?LEADS_DB_PORT is required}"
 : "${LEADS_DB_NAME:?LEADS_DB_NAME is required}"
-: "${LEADS_APP_USER:?LEADS_APP_USER is required}"
-: "${LEADS_APP_PASSWORD:?LEADS_APP_PASSWORD is required}"
+: "${LEADS_READONLY_USER:?LEADS_READONLY_USER is required}"
+: "${LEADS_READONLY_PASSWORD:?LEADS_READONLY_PASSWORD is required}"
 
 case "$LEADS_DB_HOST" in
   127.0.0.1|localhost|::1) ;;
@@ -41,11 +41,11 @@ sha_file="$final.sha256"
 meta_file="$final.meta"
 trap 'rm -f "$tmp"' EXIT
 
-export PGPASSWORD="$LEADS_APP_PASSWORD"
+export PGPASSWORD="$LEADS_READONLY_PASSWORD"
 pg_dump \
   --host "$LEADS_DB_HOST" \
   --port "$LEADS_DB_PORT" \
-  --username "$LEADS_APP_USER" \
+  --username "$LEADS_READONLY_USER" \
   --dbname "$LEADS_DB_NAME" \
   --format custom \
   --no-owner \
@@ -57,7 +57,7 @@ mv "$tmp" "$final"
 sha256sum "$final" > "$sha_file"
 chmod 600 "$final" "$sha_file"
 
-canonical_count="$(psql --host "$LEADS_DB_HOST" --port "$LEADS_DB_PORT" --username "$LEADS_APP_USER" --dbname "$LEADS_DB_NAME" --tuples-only --no-align --command 'select count(*) from leads.leads')"
+canonical_count="$(psql --host "$LEADS_DB_HOST" --port "$LEADS_DB_PORT" --username "$LEADS_READONLY_USER" --dbname "$LEADS_DB_NAME" --tuples-only --no-align --command 'select count(*) from leads.leads')"
 cat > "$meta_file" <<META
 policy=local-backup-only
 created_at=$(date -Is)

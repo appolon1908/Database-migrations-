@@ -38,6 +38,7 @@ CREATE SCHEMA IF NOT EXISTS lead_ops AUTHORIZATION leads_owner;
 
 REVOKE ALL ON SCHEMA lead_import_raw, leads, lead_audit, lead_ops FROM PUBLIC;
 GRANT USAGE, CREATE ON SCHEMA lead_import_raw TO leads_importer;
+GRANT USAGE ON SCHEMA lead_import_raw TO leads_readonly;
 GRANT USAGE ON SCHEMA leads, lead_audit, lead_ops TO leads_app, leads_readonly;
 
 SET ROLE leads_owner;
@@ -173,5 +174,12 @@ ALTER DEFAULT PRIVILEGES FOR ROLE leads_owner IN SCHEMA lead_audit
   GRANT SELECT, INSERT ON TABLES TO leads_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE leads_owner IN SCHEMA lead_ops
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO leads_app;
+
+-- Backups run as the read-only role. Raw tables are created dynamically by
+-- leads_importer, so both existing and future raw tables must be readable by
+-- leads_readonly without granting raw staging access to leads_app.
+GRANT SELECT ON ALL TABLES IN SCHEMA lead_import_raw TO leads_readonly;
+ALTER DEFAULT PRIVILEGES FOR ROLE leads_importer IN SCHEMA lead_import_raw
+  GRANT SELECT ON TABLES TO leads_readonly;
 
 -- No role/grant is created for N8N by design.
