@@ -21,6 +21,8 @@ def main() -> int:
             errors.append(f"missing table {table}")
     for required in (
         "PRIMARY KEY (tenant_id, lead_id)",
+        "GRANT USAGE ON SCHEMA leads TO leads_app",
+        "GRANT USAGE ON SCHEMA leads TO leads_readonly",
         "GRANT SELECT",
         "source_sha text NOT NULL",
     ):

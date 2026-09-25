@@ -42,5 +42,12 @@ jobs:
         run: python scripts/verify_leads_mcr_projection.py
       - name: Apply projection schema in disposable PostgreSQL
         run: |
+          psql -h 127.0.0.1 -U postgres -d mcr_verify -v ON_ERROR_STOP=1 <<'SQL'
+          create role leads_app login password 'ci-only';
+          create role leads_readonly login password 'ci-readonly';
+          SQL
           psql -h 127.0.0.1 -U postgres -d mcr_verify -v ON_ERROR_STOP=1 -f leads-workstation/0002_mcr_projection_read_model.sql
           test "$(psql -h 127.0.0.1 -U postgres -d mcr_verify -Atc "select count(*) from pg_tables where schemaname='leads' and tablename like 'mcr_%_projection'")" = "5"
+          test "$(psql -h 127.0.0.1 -U postgres -d mcr_verify -Atc "select has_schema_privilege('leads_app','leads','USAGE')")" = "t"
+          test "$(psql -h 127.0.0.1 -U postgres -d mcr_verify -Atc "select bool_and(has_table_privilege('leads_app','leads.'||tablename,'SELECT')) from pg_tables where schemaname='leads' and tablename like 'mcr_%_projection'")" = "t"
+          test "$(psql -h 127.0.0.1 -U postgres -d mcr_verify -Atc "select bool_or(has_table_privilege('leads_app','leads.'||tablename,'INSERT') or has_table_privilege('leads_app','leads.'||tablename,'UPDATE') or has_table_privilege('leads_app','leads.'||tablename,'DELETE')) from pg_tables where schemaname='leads' and tablename like 'mcr_%_projection'")" = "f"

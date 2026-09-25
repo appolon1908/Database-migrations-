@@ -108,6 +108,7 @@ COMMENT ON TABLE leads.mcr_delivery_projection IS
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'leads_app') THEN
+        GRANT USAGE ON SCHEMA leads TO leads_app;
         GRANT SELECT ON
             leads.mcr_lead_projection,
             leads.mcr_channel_health_projection,
@@ -117,6 +118,7 @@ BEGIN
         TO leads_app;
     END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'leads_readonly') THEN
+        GRANT USAGE ON SCHEMA leads TO leads_readonly;
         GRANT SELECT ON
             leads.mcr_lead_projection,
             leads.mcr_channel_health_projection,
