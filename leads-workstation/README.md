@@ -23,3 +23,11 @@ This integration branch owns the database contract for the local Ubuntu Leads Wo
 - Read-only reporting role: explicit views/select only.
 
 No migration is applied until this contract is reviewed against the current Database-migrations repository conventions and the local PostgreSQL 18 instance.
+
+
+## MCR-B projection schema
+
+The additive `0002_mcr_projection_read_model.sql` migration defines tenant-bound lifecycle,
+channel-health, suppression, exposure, and delivery projections consumed by Leads-Workstation.
+Middleware MCR-C remains the decision/execution authority. `leads_app` and
+`leads_readonly` receive SELECT-only access to these projection tables.

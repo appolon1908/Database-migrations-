@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "integration": "leads-workstation",
   "repository": "Database-migrations-",
   "authority": "PostgreSQL schema and role contract",
@@ -21,6 +21,22 @@
     "Meltano role cannot write canonical leads schema",
     "n8n has no direct canonical database writer role",
     "canonical writes are auditable",
-    "migration and restore paths are replayable"
-  ]
+    "migration and restore paths are replayable",
+    "MCR projection tables are tenant-keyed",
+    "Leads application roles receive SELECT only on MCR projection tables",
+    "MCR projection schema contains no provider execution authority"
+  ],
+  "mcr_projection": {
+    "authority": "Leads-Workstation read model only",
+    "decision_authority": "Middleware MCR-C",
+    "tables": [
+      "leads.mcr_lead_projection",
+      "leads.mcr_channel_health_projection",
+      "leads.mcr_suppression_projection",
+      "leads.mcr_exposure_projection",
+      "leads.mcr_delivery_projection"
+    ],
+    "application_grants": "SELECT only",
+    "provider_effects": "none"
+  }
 }
