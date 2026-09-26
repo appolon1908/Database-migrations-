@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "integration": "leads-workstation",
   "repository": "Database-migrations-",
   "authority": "PostgreSQL schema and role contract",
@@ -26,6 +26,22 @@
     "promotion candidates require explicit review/approval and Leads API validation before canonical write",
     "real-batch canonical promotion requires import-batch promotion_authorized=true",
     "promotion candidates must reference an exact staged-row provenance manifest entry",
-    "leads_importer may append row provenance but cannot write promotion decisions or canonical leads"
-  ]
+    "leads_importer may append row provenance but cannot write promotion decisions or canonical leads",
+    "MCR projection tables are tenant-keyed",
+    "Leads application roles receive SELECT only on MCR projection tables",
+    "MCR projection schema contains no provider execution authority"
+  ],
+  "mcr_projection": {
+    "authority": "Leads-Workstation read model only",
+    "decision_authority": "Middleware MCR-C",
+    "tables": [
+      "leads.mcr_lead_projection",
+      "leads.mcr_channel_health_projection",
+      "leads.mcr_suppression_projection",
+      "leads.mcr_exposure_projection",
+      "leads.mcr_delivery_projection"
+    ],
+    "application_grants": "SELECT only",
+    "provider_effects": "none"
+  }
 }
