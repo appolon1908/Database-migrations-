@@ -1,0 +1,32 @@
+[Unit]
+Description=Codestra Leads local PostgreSQL backup
+Documentation=file:///home/codestra/Worktrees/Database-migrations-/leads-workstation-integration/leads-workstation/BACKUP_POLICY.md
+After=postgresql@18-main.service
+Requires=postgresql@18-main.service
+ConditionPathExists=/home/codestra/.config/codestra-leads/db.env
+
+[Service]
+Type=oneshot
+User=codestra
+Group=codestra
+EnvironmentFile=/home/codestra/.config/codestra-leads/db.env
+Environment=LEADS_BACKUP_DIR=/home/codestra/Backups/Leads
+Environment=LEADS_BACKUP_RETENTION_DAYS=14
+ExecStart=/home/codestra/Worktrees/Database-migrations-/leads-workstation-integration/leads-workstation/backup-local.sh
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/codestra/Backups/Leads
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+LockPersonality=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

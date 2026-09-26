@@ -8,7 +8,7 @@
     "lead_import_raw": "Meltano-only raw staging",
     "leads": "canonical lead state owned through Leads-Workstation service",
     "lead_audit": "append-only business/audit evidence",
-    "lead_ops": "import batches, duplicate review, outbox/operational metadata"
+    "lead_ops": "import batches, immutable row-provenance manifest, governed promotion candidates, duplicate review, outbox/operational metadata"
   },
   "required_roles": [
     "leads_owner",
@@ -22,6 +22,11 @@
     "n8n has no direct canonical database writer role",
     "canonical writes are auditable",
     "migration and restore paths are replayable",
+    "raw staging cannot be promoted directly into canonical leads",
+    "promotion candidates require explicit review/approval and Leads API validation before canonical write",
+    "real-batch canonical promotion requires import-batch promotion_authorized=true",
+    "promotion candidates must reference an exact staged-row provenance manifest entry",
+    "leads_importer may append row provenance but cannot write promotion decisions or canonical leads",
     "MCR projection tables are tenant-keyed",
     "Leads application roles receive SELECT only on MCR projection tables",
     "MCR projection schema contains no provider execution authority"
