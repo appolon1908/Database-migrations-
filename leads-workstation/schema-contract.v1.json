@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "integration": "leads-workstation",
+  "repository": "Database-migrations-",
+  "authority": "PostgreSQL schema and role contract",
+  "target_database": "leads_workstation",
+  "schemas": {
+    "lead_import_raw": "Meltano-only raw staging",
+    "leads": "canonical lead state owned through Leads-Workstation service",
+    "lead_audit": "append-only business/audit evidence",
+    "lead_ops": "import batches, immutable row-provenance manifest, governed promotion candidates, duplicate review, outbox/operational metadata"
+  },
+  "required_roles": [
+    "leads_owner",
+    "leads_importer",
+    "leads_app",
+    "leads_readonly"
+  ],
+  "invariants": [
+    "country and business_category are distinct non-derived columns",
+    "Meltano role cannot write canonical leads schema",
+    "n8n has no direct canonical database writer role",
+    "canonical writes are auditable",
+    "migration and restore paths are replayable",
+    "raw staging cannot be promoted directly into canonical leads",
+    "promotion candidates require explicit review/approval and Leads API validation before canonical write",
+    "real-batch canonical promotion requires import-batch promotion_authorized=true",
+    "promotion candidates must reference an exact staged-row provenance manifest entry",
+    "leads_importer may append row provenance but cannot write promotion decisions or canonical leads"
+  ]
+}
